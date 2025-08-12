@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendPasswordResetEmail = async (userEmail, resetToken) => {
-  const resetUrl = `${process.env.APP_FRONTEND_URL}/reset-password/${resetToken}`; // Adjust frontend path if needed
+  const resetUrl = `${process.env.APP_FRONTEND_URL}/auth/reset-password/${resetToken}`; // Adjust frontend path if needed
 
   const mailOptions = {
     from: process.env.EMAIL_USER, // Sender address
@@ -21,7 +21,7 @@ const sendPasswordResetEmail = async (userEmail, resetToken) => {
     html: `
       <p>You are receiving this because you (or someone else) have requested the reset of the password for your account.</p>
       <p>Please click on the following link, or paste this into your browser to complete the process:</p>
-      <p><a href="${resetUrl}">${resetUrl}</a></p>
+      <p><a href="${resetUrl}">Reset Password</a></p>
       <p>This link will expire in 1 hour.</p>
       <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
       <br>
