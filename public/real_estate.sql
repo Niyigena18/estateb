@@ -169,7 +169,8 @@ CREATE TABLE `rent_reminders` (
   `payment_id` int(11) DEFAULT NULL,
   `message` text DEFAULT NULL,
   `sent_at` timestamp NULL DEFAULT NULL,
-  `reminder_date` datetime NOT NULL
+  `reminder_date` datetime NOT NULL,
+  `is_sent` tinyint(1) NOT NULL DEFAULT 0  -- This is the missing column
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
