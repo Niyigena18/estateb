@@ -2,7 +2,9 @@
 const express = require("express");
 const router = express.Router();
 const notificationController = require("../controllers/notificationController");
+
 const authenticateJWT = require("../middleware/auth");
+const authenticateJWT = require("../middleware/auth"); // Assuming your JWT authentication middleware is here
 
 router.post("/", authenticateJWT, notificationController.createNotification);
 // @route   GET /api/notifications
