@@ -38,7 +38,7 @@ const { AuthenticationError } = require("../utils/constants");
 
 const auth = (req, res, next) => {
   // Get token from header
-  const token = req.header("x-auth-token");
+  const token = req.header("Authorization");
 
   // Check if not token
   if (!token) {

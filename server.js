@@ -28,7 +28,7 @@ app.use(express.json()); // Body parser for JSON
 app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
 
 // Enable CORS (if frontend is on a different domain)
-// app.use(cors({ origin: process.env.FRONTEND_URL }));
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 
 // Define Routes
 app.use("/api/auth", authRoutes);
@@ -39,7 +39,6 @@ app.use("/api/rent-reminders", rentRemindersRoutes);
 app.use("/api/leases", leaseAgreementRoutes);
 app.use("/api/maintenance-requests", maintenanceRequestRoutes);
 app.use("/api/notifications", notificationRoutes);
-
 // Basic route for testing
 app.get("/", (req, res) => {
   res.send("Real Estate Backend API is running!");
