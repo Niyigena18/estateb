@@ -10,7 +10,7 @@ const rentPaymentsRoutes = require("./routes/rentPayments");
 const rentRemindersRoutes = require("./routes/rentReminders");
 const leaseAgreementRoutes = require("./routes/leaseAgreementRoutes");
 const maintenanceRequestRoutes = require("./routes/maintenanceRequestRoutes");
-
+const usersRouter = require("./routes/users");
 const notificationRoutes = require("./routes/notificationRoutes");
 const authRoutes = require("./routes/auth");
 // const houseRoutes = require('./routes/houses'); // Uncomment when you create these
@@ -39,6 +39,7 @@ app.use("/api/rent-reminders", rentRemindersRoutes);
 app.use("/api/leases", leaseAgreementRoutes);
 app.use("/api/maintenance-requests", maintenanceRequestRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/users", usersRouter);
 
 // Basic route for testing
 app.get("/", (req, res) => {

@@ -22,13 +22,39 @@ class User {
   static async findById(id) {
     const pool = getPool();
     const [rows] = await pool.execute(
-      "SELECT id, username, email, phone, role FROM users WHERE id = ?", // Do not return password hash here for general public access
+      "SELECT id, username, email, phone, role, status FROM users WHERE id = ?", // Added 'status' to the select statement
       [id]
     );
     return rows[0] || null;
   }
 
-  // --- New Methods for Password Reset ---
+  // --- New Method to Find Users by Role ---
+  static async findByRole(role) {
+    const pool = getPool();
+    const [rows] = await pool.execute(
+      "SELECT id, username, email, phone, role, status FROM users WHERE role = ?", // Select users with the given role
+      [role]
+    );
+    return rows;
+  }
+
+  // --- New Method to Update a User's Fields ---
+  static async update(id, updates) {
+    const pool = getPool();
+    const fields = Object.keys(updates)
+      .map((key) => `${key} = ?`)
+      .join(", ");
+    const values = Object.values(updates);
+    values.push(id); // The ID is the last value for the WHERE clause
+
+    const [result] = await pool.execute(
+      `UPDATE users SET ${fields} WHERE id = ?`,
+      values
+    );
+    return result.affectedRows > 0;
+  }
+
+  // --- Existing Methods for Password Reset ---
 
   static async updateResetToken(userId, token, expires) {
     const pool = getPool();
@@ -56,8 +82,6 @@ class User {
     );
     return result.affectedRows > 0;
   }
-
-  // Add other user-related queries here (e.g., update, delete)
 }
 
 module.exports = User;
