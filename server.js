@@ -39,6 +39,7 @@ app.use("/api/rent-reminders", rentRemindersRoutes);
 app.use("/api/leases", leaseAgreementRoutes);
 app.use("/api/maintenance-requests", maintenanceRequestRoutes);
 app.use("/api/notifications", notificationRoutes);
+
 // Basic route for testing
 app.get("/", (req, res) => {
   res.send("Real Estate Backend API is running!");

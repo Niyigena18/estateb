@@ -661,9 +661,9 @@ const deleteRentReminder = async (req, res) => {
 
 module.exports = {
   createRentReminder,
-  getRentReminders, // This is the combined function
+  getRentReminders,
   getRentReminderById,
   updateRentReminder,
-  markRentReminderAsSent, // Ensure this is exported
+  markRentReminderAsSent,
   deleteRentReminder,
 };

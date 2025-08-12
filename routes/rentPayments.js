@@ -50,15 +50,18 @@ router.put(
   rentPaymentController.updateRentPayment
 );
 
-// @route   DELETE /api/rent-payments/:id
-// @desc    Delete a rent payment record
-// @access  Private (Landlord only, for payments related to their houses)
-// Requires authentication and landlord role
+
 router.delete(
   "/:id",
   auth,
   authorizeRole([ROLE.LANDLORD]),
   rentPaymentController.deleteRentPayment
+);
+router.put(
+  "/pay/:id",
+  auth,
+  authorizeRole([ROLE.TENANT]),
+  rentPaymentController.makePayment 
 );
 
 module.exports = router;

@@ -1,10 +1,12 @@
 // backend/controllers/notificationController.js
 const Notification = require("../models/Notification");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/helpers");
+//const notificationController = require("../controllers/notificationController");
 const {
   AuthorizationError,
   NotFoundError,
   ServerError,
+  ValidationError,
 } = require("../utils/constants");
 
 // @route   GET /api/notifications
@@ -12,13 +14,12 @@ const {
 // @access  Private (Authenticated User)
 const getNotifications = async (req, res) => {
   try {
-    const userId = req.user.id; // Get user ID from authenticated request
-    const { is_read, limit, offset } = req.query; // Optional filters
+    const userId = req.user.id;
+    const { is_read, limit, offset } = req.query;
 
-    // Convert 'is_read' query param to boolean or keep as undefined
     let filterIsRead;
     if (is_read !== undefined) {
-      filterIsRead = is_read === "true"; // Convert string 'true'/'false' to boolean
+      filterIsRead = is_read === "true";
     }
 
     const notifications = await Notification.findByUserId(
@@ -60,7 +61,6 @@ const markNotificationAsRead = async (req, res) => {
       );
     }
 
-    // Authorization: User must own the notification
     if (notification.user_id !== userId) {
       return sendErrorResponse(
         res,
@@ -104,12 +104,11 @@ const markAllNotificationsAsRead = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // First, find all unread notifications for the user
     const unreadNotifications = await Notification.findByUserId(
       userId,
       false,
       1000
-    ); // Limit to reasonable number
+    );
 
     if (unreadNotifications.length === 0) {
       return sendSuccessResponse(
@@ -169,7 +168,6 @@ const deleteNotification = async (req, res) => {
       );
     }
 
-    // Authorization: User must own the notification
     if (notification.user_id !== userId) {
       return sendErrorResponse(
         res,
@@ -238,10 +236,52 @@ const deleteAllUserNotifications = async (req, res) => {
   }
 };
 
+// --- BEGIN NEW CODE ---
+// @route   POST /api/notifications
+// @desc    Create a new notification
+// @access  Private (Internal use or for testing)
+const createNotification = async (req, res) => {
+  try {
+    const { user_id, type, message, source_id } = req.body;
+
+    if (!user_id || !type || !message) {
+      return sendErrorResponse(
+        res,
+        400,
+        ValidationError.MISSING_FIELDS,
+        "User ID, type, and message are required to create a notification."
+      );
+    }
+
+    const notificationId = await Notification.create({
+      user_id,
+      type,
+      message,
+      source_id: source_id || null,
+    });
+
+    sendSuccessResponse(res, 201, "Notification created successfully", {
+      notificationId,
+    });
+  } catch (error) {
+    console.error("Error creating notification:", error.message, error.stack);
+    sendErrorResponse(
+      res,
+      500,
+      ServerError.INTERNAL_SERVER_ERROR,
+      "Failed to create notification."
+    );
+  }
+};
+// --- END NEW CODE ---
+
 module.exports = {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
   deleteAllUserNotifications,
+  // --- BEGIN NEW EXPORT ---
+  createNotification,
+  // --- END NEW EXPORT ---
 };

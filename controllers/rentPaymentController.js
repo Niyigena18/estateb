@@ -1,6 +1,5 @@
-// controllers/rentPaymentController.js
 const RentPayment = require("../models/RentPayment");
-const House = require("../models/House"); // Needed to potentially link payments to landlord's houses
+const House = require("../models/House");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/helpers");
 const {
   ROLE,
@@ -15,7 +14,7 @@ const {
 // @access  Private (Landlord or Admin)
 const createRentPayment = async (req, res) => {
   try {
-    const { id: userId, role } = req.user; // Authenticated user
+    const { id: userId, role } = req.user;
     const {
       tenant_id,
       house_id,
@@ -28,7 +27,6 @@ const createRentPayment = async (req, res) => {
       receipt_url,
     } = req.body;
 
-    // Only landlords (or admins if you implement that role) should create payment records
     if (role !== ROLE.LANDLORD) {
       return sendErrorResponse(
         res,
@@ -38,7 +36,6 @@ const createRentPayment = async (req, res) => {
       );
     }
 
-    // Basic validation for required fields
     if (!tenant_id || !house_id || !due_date || !amount) {
       return sendErrorResponse(
         res,
@@ -56,7 +53,6 @@ const createRentPayment = async (req, res) => {
       );
     }
 
-    // Optional: Verify if the tenant is actually assigned to this house
     const house = await House.findById(house_id);
     if (!house) {
       return sendErrorResponse(
@@ -67,7 +63,6 @@ const createRentPayment = async (req, res) => {
       );
     }
     if (house.landlord_id !== userId) {
-      // Landlord can only create payments for their own houses
       return sendErrorResponse(
         res,
         403,
@@ -75,7 +70,6 @@ const createRentPayment = async (req, res) => {
         "You can only create payment records for your own properties."
       );
     }
-    // Strict check: Only create if the tenant_id matches the house's current tenant_id (if assigned)
     if (house.tenant_id !== tenant_id) {
       return sendErrorResponse(
         res,
@@ -91,13 +85,12 @@ const createRentPayment = async (req, res) => {
       due_date,
       amount,
       paid_amount: paid_amount !== undefined ? paid_amount : 0,
-      status: status || PAYMENT_STATUS.PENDING, // Default to pending if not provided
+      status: status || PAYMENT_STATUS.PENDING,
       payment_method: payment_method || null,
       payment_date: payment_date || null,
       receipt_url: receipt_url || null,
     };
 
-    // Validate provided status if it exists
     if (
       newPaymentData.status &&
       !Object.values(PAYMENT_STATUS).includes(newPaymentData.status)
@@ -150,7 +143,7 @@ const getRentPayments = async (req, res) => {
         { payments }
       );
     } else if (role === ROLE.LANDLORD) {
-      payments = await RentPayment.findByLandlordId(userId); // userId here is landlordId
+      payments = await RentPayment.findByLandlordId(userId);
       sendSuccessResponse(
         res,
         200,
@@ -158,7 +151,6 @@ const getRentPayments = async (req, res) => {
         { payments }
       );
     } else {
-      // For any other roles not explicitly handled (e.g., if you introduce 'admin' later)
       return sendErrorResponse(
         res,
         403,
@@ -196,7 +188,6 @@ const getRentPaymentById = async (req, res) => {
       );
     }
 
-    // Authorization check: Tenant can only see their own payment, Landlord can only see payments for their houses
     if (role === ROLE.TENANT && payment.tenant_id !== userId) {
       return sendErrorResponse(
         res,
@@ -206,7 +197,6 @@ const getRentPaymentById = async (req, res) => {
       );
     }
     if (role === ROLE.LANDLORD && payment.landlord_id !== userId) {
-      // payment.landlord_id comes from the join in model
       return sendErrorResponse(
         res,
         403,
@@ -255,10 +245,8 @@ const updateRentPayment = async (req, res) => {
       );
     }
 
-    // Get the house linked to this payment to check landlord ownership
     const house = await House.findById(payment.house_id);
     if (!house) {
-      // This should ideally not happen if data integrity is maintained, but good for robustness
       return sendErrorResponse(
         res,
         500,
@@ -267,7 +255,6 @@ const updateRentPayment = async (req, res) => {
       );
     }
 
-    // Authorization: Only the landlord who owns the house associated with the payment (or Admin) can update
     if (role !== ROLE.LANDLORD || house.landlord_id !== userId) {
       return sendErrorResponse(
         res,
@@ -276,10 +263,7 @@ const updateRentPayment = async (req, res) => {
         "You are not authorized to update this rent payment record."
       );
     }
-    // If you had an 'admin' role, you'd add:
-    // if (role !== ROLE.LANDLORD && role !== ROLE.ADMIN) { ... }
 
-    // Validate status if it's being updated
     if (
       updates.status &&
       !Object.values(PAYMENT_STATUS).includes(updates.status)
@@ -293,7 +277,6 @@ const updateRentPayment = async (req, res) => {
         ).join(", ")}.`
       );
     }
-    // Ensure paid_amount is a number if provided
     if (
       updates.paid_amount !== undefined &&
       typeof updates.paid_amount !== "number"
@@ -332,6 +315,73 @@ const updateRentPayment = async (req, res) => {
   }
 };
 
+// @route   PUT /api/rent-payments/pay/:id
+// @desc    Tenant makes a payment
+// @access  Private (Tenant only)
+const makePayment = async (req, res) => {
+  try {
+    const { id: paymentId } = req.params;
+    const { id: userId, role } = req.user;
+    const updates = req.body;
+
+    const payment = await RentPayment.findById(paymentId);
+    if (!payment) {
+      return sendErrorResponse(
+        res,
+        404,
+        "Payment Record Not Found",
+        "The specified payment record does not exist."
+      );
+    }
+
+    if (role !== ROLE.TENANT || payment.tenant_id !== userId) {
+      return sendErrorResponse(
+        res,
+        403,
+        AuthenticationError.FORBIDDEN,
+        "You are not authorized to make this payment."
+      );
+    }
+
+    if (payment.status === PAYMENT_STATUS.PAID) {
+      return sendErrorResponse(
+        res,
+        400,
+        "Payment Already Made",
+        "This payment has already been paid in full."
+      );
+    }
+
+    const updatedPaymentData = {
+      paid_amount: (payment.paid_amount || 0) + updates.amount,
+      payment_method: updates.payment_method,
+      payment_date: new Date(),
+      status:
+        (payment.paid_amount || 0) + updates.amount >= payment.amount
+          ? PAYMENT_STATUS.PAID
+          : PAYMENT_STATUS.PENDING,
+    };
+
+    const updated = await RentPayment.update(paymentId, updatedPaymentData);
+
+    if (!updated) {
+      throw new Error("Failed to update payment record.");
+    }
+
+    sendSuccessResponse(res, 200, "Payment recorded successfully.", {
+      paymentId,
+    });
+  } catch (error) {
+    console.error("Error making payment:", error.message, error.stack);
+    sendErrorResponse(
+      res,
+      500,
+      ServerError.INTERNAL_SERVER_ERROR,
+      error.message
+    );
+  }
+};
+
 // @route   DELETE /api/rent-payments/:id
 // @desc    Delete a rent payment record
 // @access  Private (Landlord only for their houses, or Admin)
@@ -350,7 +400,6 @@ const deleteRentPayment = async (req, res) => {
       );
     }
 
-    // Get the house linked to this payment to check landlord ownership
     const house = await House.findById(payment.house_id);
     if (!house) {
       return sendErrorResponse(
@@ -361,7 +410,6 @@ const deleteRentPayment = async (req, res) => {
       );
     }
 
-    // Authorization: Only the landlord who owns the house associated with the payment (or Admin) can delete
     if (role !== ROLE.LANDLORD || house.landlord_id !== userId) {
       return sendErrorResponse(
         res,
@@ -370,8 +418,6 @@ const deleteRentPayment = async (req, res) => {
         "You are not authorized to delete this rent payment record."
       );
     }
-    // If you had an 'admin' role, you'd add:
-    // if (role !== ROLE.LANDLORD && role !== ROLE.ADMIN) { ... }
 
     const deleted = await RentPayment.delete(paymentId);
 
@@ -403,5 +449,7 @@ module.exports = {
   getRentPayments,
   getRentPaymentById,
   updateRentPayment,
+  makePayment,
   deleteRentPayment,
+  makePayment,
 };
