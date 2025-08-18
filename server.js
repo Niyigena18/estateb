@@ -28,7 +28,13 @@ app.use(express.json()); // Body parser for JSON
 app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
 
 // Enable CORS (if frontend is on a different domain)
-app.use(cors({ origin: process.env.FRONTEND_URL }));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true, // Allow cookies and Authorization headers
+  })
+);
+
 
 // Define Routes
 app.use("/api/auth", authRoutes);

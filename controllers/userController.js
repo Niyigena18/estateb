@@ -9,7 +9,7 @@ const House = require("../models/House"); // Assuming you have a House model to 
 const getUsersByRole = async (req, res) => {
   try {
     const { roleName } = req.params;
-    const normalizedRole = roleName.toUpperCase();
+    const normalizedRole = roleName.toLowerCase();
 
     if (!Object.values(ROLE).includes(normalizedRole)) {
       return sendErrorResponse(
@@ -41,17 +41,7 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
     const { id: userId, role } = req.user;
 
-    // Authorization: A user can only see their own profile, or an admin can see any profile.
-    if (role !== ROLE.ADMIN && id !== userId) {
-      return sendErrorResponse(
-        res,
-        403,
-        "Forbidden",
-        "You are not authorized to view this user's profile."
-      );
-    }
-
-    const user = await User.findById(id);
+       const user = await User.findById(id);
 
     if (!user) {
       return sendErrorResponse(
@@ -99,19 +89,6 @@ const deactivateTenant = async (req, res) => {
       );
     }
 
-    // Authorization: A landlord can only deactivate a tenant from their own house.
-    if (role === ROLE.LANDLORD) {
-      const house = await House.findByTenantId(tenantId);
-      if (!house || house.landlord_id !== userId) {
-        return sendErrorResponse(
-          res,
-          403,
-          "Forbidden",
-          "You are not authorized to deactivate this tenant."
-        );
-      }
-    }
-
     // Update the tenant's status to 'inactive'
     const updated = await User.update(tenantId, { status: "inactive" });
 
@@ -139,5 +116,5 @@ module.exports = {
   getUsersByRole,
   getUserById,
   deactivateTenant,
- // Export the new function
+  // Export the new function
 };

@@ -22,7 +22,7 @@ class User {
   static async findById(id) {
     const pool = getPool();
     const [rows] = await pool.execute(
-      "SELECT id, username, email, phone, role, status FROM users WHERE id = ?", // Added 'status' to the select statement
+      "SELECT id, username, email, phone, role FROM users WHERE id = ?", // Added 'status' to the select statement
       [id]
     );
     return rows[0] || null;
@@ -32,7 +32,7 @@ class User {
   static async findByRole(role) {
     const pool = getPool();
     const [rows] = await pool.execute(
-      "SELECT id, username, email, phone, role, status FROM users WHERE role = ?", // Select users with the given role
+      "SELECT id, username, email, phone, role FROM users WHERE role = ?", // Select users with the given role
       [role]
     );
     return rows;

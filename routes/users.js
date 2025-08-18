@@ -11,9 +11,10 @@ const { ROLE } = require("../utils/constants");
 router.get(
   "/role/:roleName",
   auth,
-  authorizeRole([ROLE.ADMIN]),
+  authorizeRole([ROLE.ADMIN, ROLE.LANDLORD]),
   userController.getUsersByRole
 );
+
 router.put(
   "/:id/deactivate",
   auth,
@@ -23,6 +24,11 @@ router.put(
 // @route   GET /api/users/:id
 // @desc    Get a single user by ID
 // @access  Private (User themselves or Admin)
-router.get("/:id", auth, userController.getUserById);
+router.get(
+  "/:id",
+  auth,
+  authorizeRole([ROLE.ADMIN, ROLE.LANDLORD]),
+  userController.getUserById
+);
 
 module.exports = router;
