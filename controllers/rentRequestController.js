@@ -560,15 +560,15 @@ const deleteRentRequest = async (req, res) => {
       );
     }
 
-    // Only allow deletion if the request is pending, or if an admin is deleting
-    if (request.status !== RENT_REQUEST_STATUS.PENDING && role !== ROLE.ADMIN) {
-      return sendErrorResponse(
-        res,
-        400,
-        "Invalid State",
-        "Only pending rent requests can be deleted by tenants/landlords."
-      );
-    }
+    // // Only allow deletion if the request is pending, or if an admin is deleting
+    // if (request.status !== RENT_REQUEST_STATUS.PENDING && role !== ROLE.ADMIN) {
+    //   return sendErrorResponse(
+    //     res,
+    //     400,
+    //     "Invalid State",
+    //     "Only pending rent requests can be deleted by tenants/landlords."
+    //   );
+    // }
 
     const deleted = await RentRequest.delete(id);
 
